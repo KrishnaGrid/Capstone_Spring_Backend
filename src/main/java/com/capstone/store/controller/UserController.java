@@ -1,6 +1,10 @@
 package com.capstone.store.controller;
 
+import com.capstone.store.constants.Constants;
+import com.capstone.store.dto.UserRequest;
+import com.capstone.store.model.User;
 import com.capstone.store.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,38 +15,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/user")
 public class UserController {
     @Autowired
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid Map<String, String> request) {
-        String email = request.get("email");
-        String password = request.get("password");
-
-        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email and password must not be empty.");
-        }
-
+    public ResponseEntity<String> registerUser(@RequestBody UserRequest userRequest) {
         try {
-            userService.registerUser(email, password);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
+            userService.registerUser(userRequest);
+            return ResponseEntity.status(201).body(Constants.USER_REGISTERED);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            return ResponseEntity.status(409).body(e.getMessage());
         }
     }
 
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid Map<String, String> request) {
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserRequest userRequest, HttpSession session) {
         try {
-            String sessionId = userService.login(request.get("email"), request.get("password"));
-            return ResponseEntity.ok(Map.of("sessionId", sessionId));
+            User user = userService.loginUser(userRequest);
+            String sessionId = UUID.randomUUID().toString();
+            session.setAttribute(Constants.USER_ID, user.getId());
+            return ResponseEntity.ok(Map.of(Constants.SESSION_ID, sessionId));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            return ResponseEntity.status(400).body(Map.of(Constants.ERROR, e.getMessage()));
         }
     }
 }
-

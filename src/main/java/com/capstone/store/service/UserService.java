@@ -1,11 +1,12 @@
 package com.capstone.store.service;
 
+import com.capstone.store.constants.Constants;
+import com.capstone.store.dto.UserRequest;
 import com.capstone.store.model.User;
 import com.capstone.store.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
-import java.util.UUID;
 
 
 @Service
@@ -13,28 +14,27 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    public void registerUser(String email, String password) {
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("User already exists.");
+    public void registerUser(UserRequest userRequest) {
+        if (userRepository.findByEmail(userRequest.getEmail())==null) {
+            throw new IllegalArgumentException(Constants.USER_ALREADY_EXISTS);
         }
-        User user = new User();
-        user.setEmail(email);
-        String hashedPassword = passwordEncoder.encode(password);  // Debugging step
-        System.out.println("Hashed password: " + hashedPassword);  // Check if hashing is working
-        user.setPasswordHash(hashedPassword);
+        String hashedPassword = BCrypt.hashpw(userRequest.getPassword(), BCrypt.gensalt());
+        User user = new User(userRequest.getEmail(), hashedPassword);
         userRepository.save(user);
     }
 
-
-    public String login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password.");
+    public User loginUser(UserRequest userRequest) {
+        User user = userRepository.findByEmail(userRequest.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException(Constants.INVALID_USER_CREDENTIALS));
+        if (!BCrypt.checkpw(userRequest.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException(Constants.INVALID_USER_CREDENTIALS);
         }
-        return UUID.randomUUID().toString(); // Generate a mock session ID
+        return user;
+    }
+
+    public Long getUserIdByEmail(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException(Constants.INVALID_EMAIL));
+        return user.getId();
     }
 }
