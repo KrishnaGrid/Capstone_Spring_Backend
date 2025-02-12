@@ -8,7 +8,7 @@ public class Constants {
     public static final String CART_UPDATED = "Cart item updated";
     public static final String CART_ITEM_REMOVED = "Item removed from cart";
     public static final String CART_CLEARED = "Cart cleared successfully";
-    public static final String CART_NOT_FOUND = "Cart is not found";
+    public static final String CART_NOT_FOUND = "Cart not found";
     public static final String QUANTITY_LESS_THAN_ZERO = "Quantity must be greater than zero";
     public static final String ITEM_NOT_FOUND = "Item not found in cart";
     public static final String PRODUCT_NOT_FOUND = "Product not found: ";
@@ -20,4 +20,5 @@ public class Constants {
     public static final String INVALID_USER_CREDENTIALS = "Invalid credentials";
     public static final String INVALID_EMAIL = "Invalid UserEmail";
     public static final String ERROR = "error";
+    public static final String INVALID_REGISTRATION_REQUEST = "Invalid registration request";
 }

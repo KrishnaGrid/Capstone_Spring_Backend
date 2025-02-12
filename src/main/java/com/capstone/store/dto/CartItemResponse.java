@@ -15,6 +15,7 @@ public class CartItemResponse {
         this.totalPrice = totalPrice;
     }
 
+
     // Getters and Setters
     public Long getProductId() {
         return productId;

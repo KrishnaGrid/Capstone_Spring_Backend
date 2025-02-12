@@ -1,5 +1,4 @@
 package com.capstone.store.service;
-
 import com.capstone.store.dto.*;
 import com.capstone.store.exception.BadRequestException;
 import com.capstone.store.exception.ResourceNotFoundException;
@@ -30,18 +29,20 @@ public class CartService {
             throw new BadRequestException(Constants.QUANTITY_LESS_THAN_ZERO);
         }
 
-        productService.validateStockAvailability(request.getProductId(), request.getQuantity());
-
         Cart cart = cartRepository.findByUserId(userId).orElse(new Cart(userId));
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst();
 
+        int finalQuantity = request.getQuantity();
         if (existingItem.isPresent()) {
-            CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + request.getQuantity();
-            productService.validateStockAvailability(product.getId(), newQuantity);
-            item.setQuantity(newQuantity);
+            finalQuantity += existingItem.get().getQuantity();
+        }
+
+        productService.validateStockAvailability(product.getId(), finalQuantity);
+
+        if (existingItem.isPresent()) {
+            existingItem.get().setQuantity(finalQuantity);
         } else {
             CartItem newItem = new CartItem(cart, product, request.getQuantity());
             cart.getItems().add(newItem);
@@ -49,6 +50,7 @@ public class CartService {
 
         cartRepository.save(cart);
     }
+
 
     public List<CartItemResponse> viewCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
